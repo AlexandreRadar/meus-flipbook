@@ -1,0 +1,15 @@
+.\.venv\Scripts\activate
+python make_flipbook_mupdf.py
+
+
+
+trocar estas 2 linhas do arquivo index.html
+
+<link rel="stylesheet" href="https://unpkg.com/page-flip/dist/css/page-flip.min.css">
+<script src="https://unpkg.com/page-flip/dist/js/page-flip.browser.min.js"></script>
+
+
+por estas 2 linhas
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/css/page-flip.min.css">
+<script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
