@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <!-- Libera zoom no mobile -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes">
+  <title>Meu Flipbook</title>
+  <style>
+    html, body { height:100%; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#111; color:#eee; }
+    header { padding:12px 16px; font-weight:600; display:flex; align-items:center; gap:12px; }
+    header a { margin-left:auto; background:#1f1f1f; color:#eee; padding:8px 12px; border:1px solid #333; border-radius:10px; text-decoration:none; }
+    #flipbook-container { width:100vw; height:calc(100vh - 56px); display:flex; align-items:center; justify-content:center; }
+    /* aumenta a área útil no celular */
+    #flipbook { width:100vw; height:calc(100vh - 120px); background:#222; max-width:1200px; }
+    .pf-controls { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); display:flex; gap:12px; z-index:10; }
+    .pf-btn { padding:10px 14px; border-radius:10px; background:#1f1f1f; color:#eee; border:1px solid #333; cursor:pointer }
+    .pf-counter { font-size:14px; opacity:.8; align-self:center }
+    img { background:#fff; }
+    /* Modal Zoom */
+    #zoomModal { display:none; position:fixed; inset:0; background:rgba(0,0,0,.9); z-index:9999; align-items:center; justify-content:center; }
+    #zoomImg { max-width:100%; max-height:100%; touch-action: pan-x pan-y; background:#fff; }
+    #closeZoom { position:fixed; top:12px; right:12px; padding:10px 14px; border-radius:10px; background:#1f1f1f; color:#eee; border:1px solid #333; z-index:10000; cursor:pointer }
+  </style>
+
+  <!-- Bibliotecas locais (evita bloqueios do CDN) -->
+  <link rel="stylesheet" href="vendor/page-flip/page-flip.min.css">
+</head>
+<body>
+  <header>
+    Meu Flipbook
+    <!-- Link opcional para modo scroll -->
+    <a href="mobile.html">📱 Modo Mobile</a>
+  </header>
+
+  <div id="flipbook-container"><div id="flipbook"></div></div>
+
+  <div class="pf-controls">
+    <button id="prev" class="pf-btn">◀︎ Anterior</button>
+    <div id="counter" class="pf-counter"></div>
+    <button id="next" class="pf-btn">Próxima ▶︎</button>
+    <button id="zoom" class="pf-btn">🔍 Zoom</button>
+  </div>
+
+  <!-- Modal Zoom -->
+  <div id="zoomModal">
+    <button id="closeZoom">Fechar ✕</button>
+    <img id="zoomImg" alt="zoom">
+  </div>
+
+  <script src="vendor/page-flip/page-flip.browser.min.js"></script>
+  <script>
+    // ATENÇÃO: liste aqui TODAS as páginas que existem em /pages/
+    // Siga o padrão page_001.jpg, page_002.jpg, ... (adicione quantas precisar)
+    const images = [
+      "pages/page_001.jpg",
+      "pages/page_002.jpg",
+      "pages/page_003.jpg",
+      "pages/page_004.jpg"
+      // adicione mais linhas se houver mais páginas
+    ];
+
+    const bookEl = document.getElementById('flipbook');
+    const pageFlip = new St.PageFlip(bookEl, {
+      width: 800, height: 600, size: "stretch", showCover: false,
+      maxShadowOpacity: 0.2, mobileScrollSupport: true, usePortrait: true, autoSize: true
+    });
+
+    const pages = images.map(src => {
+      const d = document.createElement('div');
+      d.className = 'page';
+      d.innerHTML = '<img src="'+src+'" alt="page" style="width:100%;height:100%;object-fit:contain;">';
+      return d;
+    });
+    pageFlip.loadFromHTML(pages);
+
+    const prev = document.getElementById('prev');
+    const next = document.getElementById('next');
+    const counter = document.getElementById('counter');
+
+    function updateCounter() {
+      const s = pageFlip.getState();
+      counter.textContent = 'Página ' + (s.page + 1) + ' de ' + s.pages;
+    }
+    pageFlip.on('flip', updateCounter);
+    prev.onclick = () => pageFlip.flipPrev();
+    next.onclick = () => pageFlip.flipNext();
+    updateCounter();
+    window.addEventListener('resize', () => pageFlip.update());
+
+    // ---- Zoom modal (pinch nativo no celular) ----
+    const zoomBtn   = document.getElementById('zoom');
+    const zoomModal = document.getElementById('zoomModal');
+    const zoomImg   = document.getElementById('zoomImg');
+    const closeZoom = document.getElementById('closeZoom');
+
+    function openZoom() {
+      const s = pageFlip.getState();
+      zoomImg.src = images[s.page];
+      zoomModal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+    function closeZoomFn() {
+      zoomModal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+    zoomBtn.onclick = openZoom;
+    closeZoom.onclick = closeZoomFn;
+    zoomModal.addEventListener('click', (e) => {
+      // Fecha tocando fora da imagem
+      if (e.target === zoomModal) closeZoomFn();
+    });
+
+    // Navegar dentro do modal tocando nas laterais (opcional)
+    zoomModal.addEventListener('click', (e) => {
+      if (e.target.id === 'closeZoom' || e.target.id === 'zoomImg') return;
+      const rect = zoomModal.getBoundingClientRect();
+      const leftSide = e.clientX < rect.width / 2;
+      if (leftSide) pageFlip.flipPrev(); else pageFlip.flipNext();
+      const s = pageFlip.getState();
+      zoomImg.src = images[s.page];
+    });
+
+    // Duplo clique/toque abre o zoom
+    bookEl.addEventListener('dblclick', openZoom);
+  </script>
+</body>
+</html>
